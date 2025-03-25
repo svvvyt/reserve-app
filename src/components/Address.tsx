@@ -101,13 +101,7 @@ const Address = () => {
             className='grid grid-cols-1 lg:grid-cols-2 gap-12 items-center animate-slide-in'
           >
             <div className='rounded-lg overflow-hidden h-96 glass-card animate-fade-up'>
-              <YMapsWidget
-                mainLink={currentMapObject.mainLink}
-                mainLinkText={currentMapObject.mainLinkText}
-                categoryLink={currentMapObject.categoryLink}
-                categoryLinkText={currentMapObject.categoryLinkText}
-                iframeSrc={currentMapObject.iframeSrc}
-              />
+              <YMapsWidget iframeSrc={currentMapObject.iframeSrc} />
             </div>
             <div className='space-y-8 animate-slide-in-right'>
               <BranchInfo branch={currentBranch} showPhone />

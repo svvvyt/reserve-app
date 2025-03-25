@@ -98,13 +98,7 @@ const Welcome = () => {
             <div className='space-y-6'>
               {branch && <BranchInfo branch={branch} showPhone />}
               <div className='rounded-lg overflow-hidden border border-salon-dark/10 h-48'>
-                <YMapsWidget
-                  mainLink={mapObject.mainLink}
-                  mainLinkText={mapObject.mainLinkText}
-                  categoryLink={mapObject.categoryLink}
-                  categoryLinkText={mapObject.categoryLinkText}
-                  iframeSrc={mapObject.iframeSrc}
-                />
+                <YMapsWidget iframeSrc={mapObject.iframeSrc} />
               </div>
             </div>
           </div>
