@@ -68,3 +68,10 @@ export interface AppointmentRequest {
   phone: string;
   user_tg?: string;
 }
+
+// YMapsWidget
+export interface BranchMapObject {
+  iframeSrc: string;
+  width?: string;
+  height?: string;
+}

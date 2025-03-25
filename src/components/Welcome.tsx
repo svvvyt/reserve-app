@@ -10,9 +10,8 @@ import {
   getBranchesByCompany,
 } from '@/lib/api';
 
-import { BranchMapObjects } from '@/lib/constants';
-
 import { useApiData } from '@/hooks/use-api-data';
+import { BranchMapObject } from '@/types/index';
 
 const Welcome = () => {
   const { data: companiesData, loading: companiesLoading } = useApiData(
@@ -31,6 +30,7 @@ const Welcome = () => {
     [companyId]
   );
 
+  // активный филиал + главный офис
   const branch =
     branches?.find((b) => b.is_active && b.is_main) || branches?.[0];
   const loading = companiesLoading || companyLoading || branchesLoading;
@@ -51,7 +51,15 @@ const Welcome = () => {
     );
   }
 
-  const mapObject = BranchMapObjects[0]; // связать с филиалом
+  const mapObject: BranchMapObject = branch
+    ? {
+        iframeSrc: `https://yandex.ru/map-widget/v1/?mode=search&text=${encodeURIComponent(
+          branch.address
+        )}&z=14`,
+      }
+    : {
+        iframeSrc: '',
+      };
 
   return (
     <section className='relative min-h-screen flex items-center justify-center overflow-hidden bg-white pt-20'>
@@ -88,7 +96,7 @@ const Welcome = () => {
             )}
           >
             <div className='space-y-6'>
-              {branch && <BranchInfo branch={branch} />}
+              {branch && <BranchInfo branch={branch} showPhone />}
               <div className='rounded-lg overflow-hidden border border-salon-dark/10 h-48'>
                 <YMapsWidget
                   mainLink={mapObject.mainLink}

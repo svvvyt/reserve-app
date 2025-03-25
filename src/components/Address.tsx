@@ -5,9 +5,8 @@ import { YMapsWidget } from '@/components/YMapsWidget';
 import BranchInfo from '@/components/BranchInfo';
 
 import { getCompanies, getBranchesByCompany } from '@/lib/api';
-import { BranchMapObjects } from '@/lib/constants';
-
 import { useApiData } from '@/hooks/use-api-data';
+import { BranchMapObject } from '@/types/index';
 
 const Address = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -29,6 +28,15 @@ const Address = () => {
   );
 
   const loading = companiesLoading || branchesLoading;
+
+  const branchMapObjects: BranchMapObject[] =
+    branches?.map((branch) => ({
+      iframeSrc: `https://yandex.ru/map-widget/v1/?mode=search&text=${encodeURIComponent(
+        branch.address
+      )}&z=14`,
+      width: '750px',
+      height: '500px',
+    })) || [];
 
   const nextSlide = () => {
     setCurrentIndex((prev) =>
@@ -59,8 +67,7 @@ const Address = () => {
   }
 
   const currentBranch = branches[currentIndex];
-  const currentMapObject =
-    BranchMapObjects[currentIndex % BranchMapObjects.length];
+  const currentMapObject = branchMapObjects[currentIndex];
 
   return (
     <section
@@ -96,9 +103,7 @@ const Address = () => {
             <div className='rounded-lg overflow-hidden h-96 glass-card animate-fade-up'>
               <YMapsWidget
                 mainLink={currentMapObject.mainLink}
-                mainLinkText={
-                  currentMapObject.mainLinkText || currentBranch.name
-                }
+                mainLinkText={currentMapObject.mainLinkText}
                 categoryLink={currentMapObject.categoryLink}
                 categoryLinkText={currentMapObject.categoryLinkText}
                 iframeSrc={currentMapObject.iframeSrc}
