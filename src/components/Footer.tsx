@@ -45,7 +45,7 @@ const Footer = () => {
       <div className='container mx-auto px-4'>
         <div className='flex flex-col md:flex-row justify-between items-center'>
           <div className='mb-8 md:mb-0 text-center md:text-left'>
-            <h3 className='text-xl font-bold mb-4'>BeautyReserve</h3>
+            <h3 className='text-xl font-bold mb-4'>{company.name}</h3>
             <p className='text-white/70 max-w-xs'>
               {company?.headline ||
                 'Качественный сервис и профессиональный подход к каждому клиенту'}

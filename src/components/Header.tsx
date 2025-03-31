@@ -1,11 +1,21 @@
 import { useState, useEffect } from 'react';
 import { Menu, X } from 'lucide-react';
 
+import { useApiData } from '@/hooks/use-api-data';
+import { getCompanies } from '@/lib/api';
+
 import { cn, scrollToSection } from '@/lib/utils';
 
 const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const { data: companiesData, loading } = useApiData(getCompanies);
+
+  const companyName =
+    loading || !companiesData?.result?.length
+      ? 'BeautyReserve'
+      : companiesData.result[0].name;
 
   useEffect(() => {
     const handleScroll = () => {
@@ -30,7 +40,7 @@ const Header = () => {
     >
       <div className='container mx-auto px-4 flex justify-between items-center'>
         <div className='text-salon-dark text-xl md:text-2xl font-bold tracking-tight'>
-          BeautyReserve
+          {companyName}
         </div>
         <nav className='hidden md:flex space-x-8'>
           <button

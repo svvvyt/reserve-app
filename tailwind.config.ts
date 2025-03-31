@@ -64,7 +64,7 @@ export default {
         },
         salon: {
           dark: '#2C2C2C',
-          accent: '#D4B254', // Gold accent from wepro2.uz
+          accent: '#D4B254',
           highlight: '#E8C15F',
         },
       },

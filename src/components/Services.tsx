@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { ArrowRight, Scissors } from 'lucide-react';
-
 import { BarberService, ServiceCategory } from '@/types';
 import { toast } from 'sonner';
 import { getServiceCategoriesByCompany, getServicesByCompany } from '@/lib/api';
@@ -11,7 +10,7 @@ const Services = () => {
   const [services, setServices] = useState<BarberService[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
-  const companyId = 1; // плохо
+  const companyId = 1;
 
   useEffect(() => {
     const fetchData = async () => {
@@ -46,6 +45,11 @@ const Services = () => {
   );
   const currentCategory = categories.find((cat) => cat.id === selectedCategory);
 
+  const handleCategoryChange = (categoryId: number) => {
+    console.log('Switching to category:', categoryId);
+    setSelectedCategory((prev) => (prev !== categoryId ? categoryId : prev));
+  };
+
   const scrollToBooking = () => {
     const element = document.getElementById('booking');
     if (element) {
@@ -61,21 +65,24 @@ const Services = () => {
       id='services'
       className='section-container bg-white relative overflow-hidden'
     >
-      <div className='absolute -top-40 -right-40 w-96 h-96 bg-salon-accent/5 rounded-full blur-3xl'></div>
+      <div className='absolute -top-40 -right-40 w-96 h-96 bg-salon-accent/5 rounded-full blur-3xl pointer-events-none'></div>
       <h2 className='section-title text-salon-dark'>Наши услуги</h2>
 
       <div className='flex justify-center mb-12'>
-        <div className='inline-flex rounded-md shadow-sm bg-gray-100 p-1'>
+        <div className='inline-flex rounded-md shadow-sm bg-gray-100 p-1 space-x-1'>
           {categories.map((category) => (
             <button
               key={category.id}
               className={cn(
-                'px-6 py-2 text-sm font-medium rounded-md transition-all duration-300',
+                // Базовые стили для мобильных устройств (до 768px)
+                'px-4 py-1 text-xs font-medium rounded-md transition-colors duration-300 cursor-pointer min-w-[80px] text-center',
+                // Стили для десктопа (от 768px и выше)
+                'md:px-6 md:py-2 md:text-sm md:min-w-[100px]',
                 selectedCategory === category.id
                   ? 'bg-white shadow-sm text-salon-dark'
                   : 'bg-transparent text-salon-dark/70 hover:text-salon-dark'
               )}
-              onClick={() => setSelectedCategory(category.id)}
+              onClick={() => handleCategoryChange(category.id)}
             >
               {category.name}
             </button>
@@ -127,7 +134,7 @@ const Services = () => {
               <ArrowRight className='ml-2 h-5 w-5' />
             </button>
           </div>
-          <div className='relative'>
+          <div className='relative hidden lg:block'>
             <div className='glass-card overflow-hidden rounded-lg aspect-square animate-slide-in-right'>
               <img
                 src={currentCategory?.photo || '/placeholder.svg'}
@@ -141,10 +148,10 @@ const Services = () => {
                 <p className='text-white/80'>Профессиональные услуги для вас</p>
               </div>
             </div>
-            <div className='absolute -bottom-6 -right-6 w-32 h-32 bg-salon-accent rounded-full opacity-10 blur-2xl'></div>
+            <div className='absolute -bottom-6 -right-6 w-32 h-32 bg-salon-accent rounded-full opacity-10 blur-2xl pointer-events-none'></div>
             <div className='absolute -top-4 -left-4 w-16 h-16'>
               <div className='relative w-full h-full'>
-                <div className='absolute inset-0 bg-salon-accent rounded-full animate-pulse opacity-20'></div>
+                <div className='absolute inset-0 bg-salon-accent rounded-full animate-pulse opacity-20 pointer-events-none'></div>
                 <div className='absolute inset-0 flex items-center justify-center'>
                   <Scissors className='h-8 w-8 text-salon-dark' />
                 </div>
