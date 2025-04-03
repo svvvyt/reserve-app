@@ -43,7 +43,7 @@ const BranchInfo: React.FC<BranchInfoProps> = ({
           <h3 className='text-lg font-semibold text-salon-dark mb-1'>
             Телефон
           </h3>
-          <p className='text-salon-dark/70'>{branch.phone_number_main}</p>
+          <p className='text-salon-dark/70'>+7{branch.phone_number_main}</p>
         </div>
       </div>
     )}

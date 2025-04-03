@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { format } from 'date-fns';
 import { CalendarIcon, Clock, User, Scissors, MapPin } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, generateTimeSlots } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import {
@@ -20,7 +20,11 @@ import {
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { BarberService, Employee, AppointmentRequest, Branch } from '@/types';
+import { toast } from 'sonner';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { bookingSchema, BookingFormData } from '@/lib/booking-schema';
+import { useApiData } from '@/hooks/use-api-data';
 import {
   getCompanies,
   getEmployeesByCompany,
@@ -28,11 +32,14 @@ import {
   createAppointment,
   getBranchesByCompany,
 } from '@/lib/api';
-import { toast } from 'sonner';
-import { useApiData } from '@/hooks/use-api-data';
-import { useForm, Controller } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { bookingSchema, BookingFormData } from '@/lib/booking-schema';
+import { useBookingFilters } from '@/hooks/use-booking-filters';
+import { Employee, BarberService, Branch, AppointmentRequest } from '@/types';
+
+interface SalonData {
+  employees: Employee[];
+  services: BarberService[];
+  branches: Branch[];
+}
 
 const Booking = () => {
   const { data: companiesData, loading: companiesLoading } = useApiData(
@@ -49,18 +56,19 @@ const Booking = () => {
             getServicesByCompany(companyId, { is_active: true }),
             getBranchesByCompany(companyId),
           ]).then(([employees, services, branches]) => ({
-            employees: employees || [],
-            services: services || [],
-            branches: branches?.filter((b) => b.is_active) || [],
+            employees: employees ?? [],
+            services: services ?? [],
+            branches: branches?.filter((b) => b.is_active) ?? [],
           }))
-        : Promise.resolve(null),
+        : Promise.resolve({ employees: [], services: [], branches: [] }),
     [companyId]
   );
 
-  const [employees, setEmployees] = useState<Employee[]>([]);
-  const [services, setServices] = useState<BarberService[]>([]);
-  const [branches, setBranches] = useState<Branch[]>([]);
-  const [formSubmitting, setFormSubmitting] = useState(false);
+  const [salonData, setSalonData] = useState<SalonData>({
+    employees: [],
+    services: [],
+    branches: [],
+  });
 
   const {
     control,
@@ -82,67 +90,50 @@ const Booking = () => {
     },
   });
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const selectedService = watch('service');
   const selectedBranch = watch('branch');
 
   useEffect(() => {
     if (data) {
-      setEmployees(data.employees);
-      setServices(data.services);
-      setBranches(data.branches);
+      setSalonData(data);
     }
   }, [data]);
 
-  // Фильтрация филиалов по выбранной услуге
-  const filteredBranches = useMemo(() => {
-    if (!selectedService) return branches;
-    const employeesWithService = employees.filter((e) =>
-      e.services.includes(parseInt(selectedService))
-    );
-    const branchIds = employeesWithService.map((e) => e.branch);
-    return branches.filter((b) => branchIds.includes(b.id));
-  }, [selectedService, branches, employees]);
+  const { filteredBranches, filteredEmployees } = useBookingFilters(
+    salonData.employees,
+    salonData.services,
+    salonData.branches,
+    selectedService,
+    selectedBranch
+  );
 
-  // Фильтрация сотрудников по услуге и филиалу
-  const filteredEmployees = useMemo(() => {
-    if (!selectedService || !selectedBranch) return [];
-    return employees.filter(
-      (e) =>
-        e.services.includes(parseInt(selectedService)) &&
-        e.branch.toString() === selectedBranch
-    );
-  }, [selectedService, selectedBranch, employees]);
+  const selectedBranchData = salonData.branches.find(
+    (b) => b.id.toString() === selectedBranch
+  );
+  const timeSlots = useMemo(
+    () =>
+      selectedBranchData
+        ? generateTimeSlots(
+            selectedBranchData.opening_time,
+            selectedBranchData.closing_time
+          )
+        : [],
+    [selectedBranchData]
+  );
 
-  const generateTimeSlots = (openingTime: string, closingTime: string) => {
-    const slots = [];
-    const [openHour, openMinute] = openingTime.split(':').map(Number);
-    const [closeHour, closeMinute] = closingTime.split(':').map(Number);
-
-    let currentHour = openHour;
-    let currentMinute = openMinute;
-
-    while (
-      currentHour < closeHour ||
-      (currentHour === closeHour && currentMinute < closeMinute)
-    ) {
-      const time = `${currentHour.toString().padStart(2, '0')}:${currentMinute
-        .toString()
-        .padStart(2, '0')}`;
-      slots.push(time);
-
-      currentMinute += 15;
-      if (currentMinute >= 60) {
-        currentMinute = 0;
-        currentHour += 1;
-      }
-    }
-
-    return slots;
+  const handleResetOnChange = (field: 'service' | 'branch') => {
+    const currentValues = watch();
+    reset({
+      ...currentValues,
+      ...(field === 'service' && { branch: '', specialist: '', time: '' }),
+      ...(field === 'branch' && { specialist: '', time: '' }),
+    });
   };
 
   const onSubmit = async (formData: BookingFormData) => {
+    setIsSubmitting(true);
     try {
-      setFormSubmitting(true);
       const appointmentData: AppointmentRequest = {
         specialist: parseInt(formData.specialist),
         services: [parseInt(formData.service)],
@@ -153,19 +144,11 @@ const Booking = () => {
         user_tg: formData.telegram || undefined,
         branch: parseInt(formData.branch),
       };
+
       const result = await createAppointment(appointmentData);
       if (result) {
         toast.success('Запись успешно создана!');
-        reset({
-          branch: '',
-          specialist: '',
-          service: '',
-          date: new Date(),
-          time: '',
-          fullName: '',
-          phone: '',
-          telegram: '',
-        });
+        reset();
       } else {
         toast.error('Не удалось создать запись');
       }
@@ -173,44 +156,22 @@ const Booking = () => {
       console.error('Error creating appointment:', error);
       toast.error('Произошла ошибка при создании записи');
     } finally {
-      setFormSubmitting(false);
+      setIsSubmitting(false);
     }
   };
 
-  const selectedBranchData = branches.find(
-    (branch) => branch.id.toString() === selectedBranch
-  );
-  const timeSlots = selectedBranchData
-    ? generateTimeSlots(
-        selectedBranchData.opening_time,
-        selectedBranchData.closing_time
-      )
-    : [];
-
-  useEffect(() => {
-    if (selectedService) {
-      reset({ ...watch(), branch: '', specialist: '', time: '' });
-    }
-  }, [selectedService, reset]);
-
-  useEffect(() => {
-    if (selectedBranch) {
-      reset({ ...watch(), specialist: '', time: '' });
-    }
-  }, [selectedBranch, reset]);
-
-  const loading = companiesLoading || dataLoading;
+  const isLoading = companiesLoading || dataLoading;
 
   return (
     <section
       id='booking'
       className='section-container relative overflow-hidden'
     >
-      <div className='absolute -bottom-40 -left-40 w-96 h-96 bg-salon-accent/5 rounded-full blur-3xl'></div>
+      <div className='absolute -bottom-40 -left-40 w-96 h-96 bg-salon-accent/5 rounded-full blur-3xl' />
       <h2 className='section-title text-salon-dark'>Записаться к нам</h2>
       <div className='max-w-3xl mx-auto'>
         <div className='glass-card p-8 animate-fade-up'>
-          {loading ? (
+          {isLoading ? (
             <div className='flex justify-center py-12'>
               <p className='text-salon-dark/70'>
                 Загрузка формы бронирования...
@@ -218,7 +179,6 @@ const Booking = () => {
             </div>
           ) : (
             <form onSubmit={handleSubmit(onSubmit)} className='space-y-6'>
-              {/* Услуга */}
               <div className='space-y-2'>
                 <Label htmlFor='service' className='text-salon-dark'>
                   Выбрать услугу <span className='text-red-500'>*</span>
@@ -227,12 +187,18 @@ const Booking = () => {
                   name='service'
                   control={control}
                   render={({ field }) => (
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <SelectTrigger className='w-full'>
+                    <Select
+                      value={field.value}
+                      onValueChange={(value) => {
+                        field.onChange(value);
+                        handleResetOnChange('service');
+                      }}
+                    >
+                      <SelectTrigger>
                         <SelectValue placeholder='Выберите услугу' />
                       </SelectTrigger>
                       <SelectContent>
-                        {services.map((service) => (
+                        {salonData.services.map((service) => (
                           <SelectItem
                             key={service.id}
                             value={service.id.toString()}
@@ -257,7 +223,6 @@ const Booking = () => {
                 )}
               </div>
 
-              {/* Филиал и Специалист в одной строке */}
               <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
                 <div className='space-y-2'>
                   <Label htmlFor='branch' className='text-salon-dark'>
@@ -269,10 +234,13 @@ const Booking = () => {
                     render={({ field }) => (
                       <Select
                         value={field.value}
-                        onValueChange={field.onChange}
+                        onValueChange={(value) => {
+                          field.onChange(value);
+                          handleResetOnChange('branch');
+                        }}
                         disabled={!selectedService}
                       >
-                        <SelectTrigger className='w-full'>
+                        <SelectTrigger>
                           <SelectValue
                             placeholder={
                               !selectedService
@@ -320,7 +288,7 @@ const Booking = () => {
                         onValueChange={field.onChange}
                         disabled={!selectedBranch}
                       >
-                        <SelectTrigger className='w-full'>
+                        <SelectTrigger>
                           <SelectValue
                             placeholder={
                               !selectedBranch
@@ -356,7 +324,6 @@ const Booking = () => {
                 </div>
               </div>
 
-              {/* Дата и время */}
               <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
                 <div className='space-y-2'>
                   <Label htmlFor='date' className='text-salon-dark'>
@@ -369,7 +336,7 @@ const Booking = () => {
                       <Popover>
                         <PopoverTrigger asChild>
                           <Button
-                            variant={'outline'}
+                            variant='outline'
                             className={cn(
                               'w-full justify-start text-left font-normal',
                               !field.value && 'text-muted-foreground'
@@ -388,11 +355,10 @@ const Booking = () => {
                             mode='single'
                             selected={field.value}
                             onSelect={field.onChange}
-                            initialFocus
                             disabled={(date) =>
                               date < new Date(new Date().setHours(0, 0, 0, 0))
                             }
-                            className={cn('p-3 pointer-events-auto')}
+                            initialFocus
                           />
                         </PopoverContent>
                       </Popover>
@@ -404,6 +370,7 @@ const Booking = () => {
                     </p>
                   )}
                 </div>
+
                 <div className='space-y-2'>
                   <Label htmlFor='time' className='text-salon-dark'>
                     Выбрать время <span className='text-red-500'>*</span>
@@ -417,7 +384,7 @@ const Booking = () => {
                         onValueChange={field.onChange}
                         disabled={!watch('date') || !timeSlots.length}
                       >
-                        <SelectTrigger className='w-full'>
+                        <SelectTrigger>
                           <SelectValue placeholder='Выберите время' />
                         </SelectTrigger>
                         <SelectContent className='max-h-[300px]'>
@@ -444,7 +411,6 @@ const Booking = () => {
                 </div>
               </div>
 
-              {/* Имя, Номер и Telegram в одной строке */}
               <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
                 <div className='space-y-2'>
                   <Label htmlFor='fullName' className='text-salon-dark'>
@@ -456,9 +422,8 @@ const Booking = () => {
                     render={({ field }) => (
                       <Input
                         id='fullName'
-                        {...field}
                         placeholder='Иванов Иван'
-                        className='w-full'
+                        {...field}
                       />
                     )}
                   />
@@ -468,6 +433,7 @@ const Booking = () => {
                     </p>
                   )}
                 </div>
+
                 <div className='space-y-2'>
                   <Label htmlFor='phone' className='text-salon-dark'>
                     Ваш телефон <span className='text-red-500'>*</span>
@@ -480,16 +446,14 @@ const Booking = () => {
                         id='phone'
                         type='tel'
                         {...field}
-                        onChange={(e) => {
-                          let value = e.target.value;
-                          value = value.replace(/[^0-9+]/g, '');
-                          if (value.startsWith('7')) {
-                            value = `+${value}`;
-                          }
-                          field.onChange(value);
-                        }}
+                        onChange={(e) =>
+                          field.onChange(
+                            e.target.value
+                              .replace(/[^0-9+]/g, '')
+                              .replace(/^7/, '+7')
+                          )
+                        }
                         placeholder='+79871234567'
-                        className='w-full'
                       />
                     )}
                   />
@@ -499,6 +463,7 @@ const Booking = () => {
                     </p>
                   )}
                 </div>
+
                 <div className='space-y-2'>
                   <Label htmlFor='telegram' className='text-salon-dark'>
                     Telegram (опционально)
@@ -510,15 +475,14 @@ const Booking = () => {
                       <Input
                         id='telegram'
                         {...field}
-                        onChange={(e) => {
-                          let value = e.target.value;
-                          if (value && !value.startsWith('@')) {
-                            value = `@${value}`;
-                          }
-                          field.onChange(value);
-                        }}
+                        onChange={(e) =>
+                          field.onChange(
+                            e.target.value.startsWith('@')
+                              ? e.target.value
+                              : `@${e.target.value}`
+                          )
+                        }
                         placeholder='@username'
-                        className='w-full'
                       />
                     )}
                   />
@@ -533,9 +497,9 @@ const Booking = () => {
               <Button
                 type='submit'
                 className='w-full btn-primary'
-                disabled={formSubmitting}
+                disabled={isSubmitting}
               >
-                {formSubmitting ? 'Обработка...' : 'Записаться'}
+                {isSubmitting ? 'Обработка...' : 'Записаться'}
               </Button>
             </form>
           )}

@@ -74,9 +74,7 @@ const Services = () => {
             <button
               key={category.id}
               className={cn(
-                // Базовые стили для мобильных устройств (до 768px)
                 'px-4 py-1 text-xs font-medium rounded-md transition-colors duration-300 cursor-pointer min-w-[80px] text-center',
-                // Стили для десктопа (от 768px и выше)
                 'md:px-6 md:py-2 md:text-sm md:min-w-[100px]',
                 selectedCategory === category.id
                   ? 'bg-white shadow-sm text-salon-dark'
