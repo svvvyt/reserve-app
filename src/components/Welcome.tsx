@@ -65,8 +65,8 @@ const Welcome = () => {
     <section className='relative min-h-screen flex items-center justify-center overflow-hidden bg-white pt-20'>
       <div className='container mx-auto px-4 z-10'>
         <div className='grid grid-cols-1 lg:grid-cols-2 gap-12 items-center'>
-          <div className='space-y-8 animate-fade-up'>
-            <h1 className='text-4xl sm:text-5xl md:text-6xl font-semibold tracking-tight text-salon-dark'>
+          <div className='space-y-8 animate-fade-up flex items-center justify-center flex-col'>
+            <h1 className='text-4xl sm:text-5xl md:text-8xl font-semibold tracking-tight text-salon-dark'>
               Welcome
             </h1>
             <p className='text-xl sm:text-2xl md:text-3xl font-medium text-salon-accent leading-relaxed'>

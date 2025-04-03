@@ -444,85 +444,90 @@ const Booking = () => {
                 </div>
               </div>
 
-              <div className='space-y-2'>
-                <Label htmlFor='fullName' className='text-salon-dark'>
-                  Ваше имя <span className='text-red-500'>*</span>
-                </Label>
-                <Controller
-                  name='fullName'
-                  control={control}
-                  render={({ field }) => (
-                    <Input
-                      id='fullName'
-                      {...field}
-                      placeholder='Иванов Иван'
-                      className='w-full'
-                    />
+              {/* Имя, Номер и Telegram в одной строке */}
+              <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
+                <div className='space-y-2'>
+                  <Label htmlFor='fullName' className='text-salon-dark'>
+                    Ваше имя <span className='text-red-500'>*</span>
+                  </Label>
+                  <Controller
+                    name='fullName'
+                    control={control}
+                    render={({ field }) => (
+                      <Input
+                        id='fullName'
+                        {...field}
+                        placeholder='Иванов Иван'
+                        className='w-full'
+                      />
+                    )}
+                  />
+                  {errors.fullName && (
+                    <p className='text-red-500 text-sm'>
+                      {errors.fullName.message}
+                    </p>
                   )}
-                />
-                {errors.fullName && (
-                  <p className='text-red-500 text-sm'>
-                    {errors.fullName.message}
-                  </p>
-                )}
-              </div>
-              <div className='space-y-2'>
-                <Label htmlFor='phone' className='text-salon-dark'>
-                  Ваш телефон <span className='text-red-500'>*</span>
-                </Label>
-                <Controller
-                  name='phone'
-                  control={control}
-                  render={({ field }) => (
-                    <Input
-                      id='phone'
-                      type='tel'
-                      {...field}
-                      onChange={(e) => {
-                        let value = e.target.value;
-                        value = value.replace(/[^0-9+]/g, '');
-                        if (value.startsWith('7')) {
-                          value = `+${value}`;
-                        }
-                        field.onChange(value);
-                      }}
-                      placeholder='+79871234567'
-                      className='w-full'
-                    />
+                </div>
+                <div className='space-y-2'>
+                  <Label htmlFor='phone' className='text-salon-dark'>
+                    Ваш телефон <span className='text-red-500'>*</span>
+                  </Label>
+                  <Controller
+                    name='phone'
+                    control={control}
+                    render={({ field }) => (
+                      <Input
+                        id='phone'
+                        type='tel'
+                        {...field}
+                        onChange={(e) => {
+                          let value = e.target.value;
+                          value = value.replace(/[^0-9+]/g, '');
+                          if (value.startsWith('7')) {
+                            value = `+${value}`;
+                          }
+                          field.onChange(value);
+                        }}
+                        placeholder='+79871234567'
+                        className='w-full'
+                      />
+                    )}
+                  />
+                  {errors.phone && (
+                    <p className='text-red-500 text-sm'>
+                      {errors.phone.message}
+                    </p>
                   )}
-                />
-                {errors.phone && (
-                  <p className='text-red-500 text-sm'>{errors.phone.message}</p>
-                )}
-              </div>
-              <div className='space-y-2'>
-                <Label htmlFor='telegram' className='text-salon-dark'>
-                  Ваш Telegram (опционально)
-                </Label>
-                <Controller
-                  name='telegram'
-                  control={control}
-                  render={({ field }) => (
-                    <Input
-                      id='telegram'
-                      {...field}
-                      onChange={(e) => {
-                        let value = e.target.value;
-                        if (value && !value.startsWith('@')) {
-                          value = `@${value}`;
-                        }
-                        field.onChange(value);
-                      }}
-                      placeholder='@username'
-                      className='w-full'
-                    />
+                </div>
+                <div className='space-y-2'>
+                  <Label htmlFor='telegram' className='text-salon-dark'>
+                    Telegram (опционально)
+                  </Label>
+                  <Controller
+                    name='telegram'
+                    control={control}
+                    render={({ field }) => (
+                      <Input
+                        id='telegram'
+                        {...field}
+                        onChange={(e) => {
+                          let value = e.target.value;
+                          if (value && !value.startsWith('@')) {
+                            value = `@${value}`;
+                          }
+                          field.onChange(value);
+                        }}
+                        placeholder='@username'
+                        className='w-full'
+                      />
+                    )}
+                  />
+                  {errors.telegram && (
+                    <p className='text-red-500 text-sm'>
+                      {errors.telegram.message}
+                    </p>
                   )}
-                />
-                {errors.telegram && (
-                  <p className='text-red-500 text-sm'>
-                    {errors.telegram.message}
-                  </p>
-                )}
+                </div>
               </div>
 
               <Button

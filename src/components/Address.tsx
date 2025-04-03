@@ -81,7 +81,7 @@ const Address = () => {
         </h2>
         <div className='relative'>
           {branches.length > 1 && (
-            <>
+            <div className='absolute inset-y-0 left-0 right-0 flex items-center justify-between px-0 sm:px-12'>
               <button
                 onClick={prevSlide}
                 className='absolute -left-12 top-1/2 -translate-y-1/2 z-10 p-2 bg-salon-accent/80 hover:bg-salon-accent text-white rounded-full'
@@ -94,7 +94,7 @@ const Address = () => {
               >
                 <ChevronRight className='h-6 w-6' />
               </button>
-            </>
+            </div>
           )}
           <div
             key={currentIndex}
