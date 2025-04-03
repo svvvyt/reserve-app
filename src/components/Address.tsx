@@ -31,11 +31,17 @@ const Address = () => {
 
   const branchMapObjects: BranchMapObject[] =
     branches?.map((branch) => ({
-      iframeSrc: `https://yandex.ru/map-widget/v1/?mode=search&text=${encodeURIComponent(
+      mainLink: `https://yandex.ru/maps/?text=${encodeURIComponent(
         branch.address
-      )}&z=14`,
-      width: '750px',
-      height: '500px',
+      )}`,
+      mainLinkText: branch.name,
+      categoryLink: `https://yandex.ru/maps/?text=${encodeURIComponent(
+        branch.landmark
+      )}`,
+      categoryLinkText: `Филиал в ${branch.landmark}`,
+      iframeSrc: `https://yandex.ru/map-widget/v1/?mode=search&text=${encodeURIComponent(
+        `${branch.name} ${branch.address} ${branch.landmark}`
+      )}&z=17`,
     })) || [];
 
   const nextSlide = () => {
@@ -101,7 +107,15 @@ const Address = () => {
             className='grid grid-cols-1 lg:grid-cols-2 gap-12 items-center animate-slide-in'
           >
             <div className='rounded-lg overflow-hidden h-96 glass-card animate-fade-up'>
-              <YMapsWidget iframeSrc={currentMapObject.iframeSrc} />
+              <YMapsWidget
+                mainLink={currentMapObject.mainLink}
+                mainLinkText={currentMapObject.mainLinkText}
+                categoryLink={currentMapObject.categoryLink}
+                categoryLinkText={currentMapObject.categoryLinkText}
+                iframeSrc={currentMapObject.iframeSrc}
+                width={currentMapObject.width}
+                height={currentMapObject.height}
+              />
             </div>
             <div className='space-y-8 animate-slide-in-right'>
               <BranchInfo branch={currentBranch} showPhone />

@@ -53,11 +53,23 @@ const Welcome = () => {
 
   const mapObject: BranchMapObject = branch
     ? {
-        iframeSrc: `https://yandex.ru/map-widget/v1/?mode=search&text=${encodeURIComponent(
+        mainLink: `https://yandex.ru/maps/?text=${encodeURIComponent(
           branch.address
-        )}&z=14`,
+        )}`,
+        mainLinkText: branch.name,
+        categoryLink: `https://yandex.ru/maps/?text=${encodeURIComponent(
+          branch.landmark
+        )}`,
+        categoryLinkText: `Филиал в ${branch.landmark}`,
+        iframeSrc: `https://yandex.ru/map-widget/v1/?mode=search&text=${encodeURIComponent(
+          `${branch.name} ${branch.address} ${branch.landmark}`
+        )}&z=17`,
       }
     : {
+        mainLink: '',
+        mainLinkText: '',
+        categoryLink: '',
+        categoryLinkText: '',
         iframeSrc: '',
       };
 
@@ -98,7 +110,15 @@ const Welcome = () => {
             <div className='space-y-6'>
               {branch && <BranchInfo branch={branch} showPhone />}
               <div className='rounded-lg overflow-hidden border border-salon-dark/10 h-48'>
-                <YMapsWidget iframeSrc={mapObject.iframeSrc} />
+                <YMapsWidget
+                  mainLink={mapObject.mainLink}
+                  mainLinkText={mapObject.mainLinkText}
+                  categoryLink={mapObject.categoryLink}
+                  categoryLinkText={mapObject.categoryLinkText}
+                  iframeSrc={mapObject.iframeSrc}
+                  width={mapObject.width}
+                  height={mapObject.height}
+                />
               </div>
             </div>
           </div>

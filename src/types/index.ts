@@ -71,6 +71,10 @@ export interface AppointmentRequest {
 
 // YMapsWidget
 export interface BranchMapObject {
+  mainLink: string;
+  mainLinkText: string;
+  categoryLink: string;
+  categoryLinkText: string;
   iframeSrc: string;
   width?: string;
   height?: string;
